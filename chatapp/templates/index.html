@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatPulse • Realtime Chats, Calls & Video</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- ========================================== -->
+    <!-- AUTH VIEWS -->
+    <!-- ========================================== -->
+    <div id="auth-container" class="auth-wrapper">
+        <!-- View 1: Email Input -->
+        <div id="view-email" class="auth-card">
+            <div class="auth-brand">
+                <div class="brand-logo">
+                    <i class="fa-solid fa-comments"></i>
+                </div>
+                <h1>ChatPulse</h1>
+                <p>Real-time Chats, Audio & Video Calls</p>
+            </div>
+
+            <form id="form-email" onsubmit="handleSendOtp(event)">
+                <div class="form-group">
+                    <label for="input-email"><i class="fa-regular fa-envelope"></i> Enter your Email Address</label>
+                    <input type="email" id="input-email" placeholder="name@example.com" required autocomplete="email">
+                </div>
+                <button type="submit" id="btn-send-otp" class="btn btn-primary btn-block">
+                    <span>Send Verification Code</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </form>
+
+            <div class="auth-extra-tools">
+                <button type="button" class="btn-text-tool" onclick="openSmtpConfigModal()">
+                    <i class="fa-solid fa-gear"></i> Email SMTP Setup (for real email delivery)
+                </button>
+            </div>
+
+            <div class="auth-footer">
+                <small><i class="fa-solid fa-shield-halved"></i> One account per email • Synced across all your devices</small>
+            </div>
+        </div>
+
+        <!-- View 2: OTP Verification -->
+        <div id="view-otp" class="auth-card hidden">
+            <button class="btn-back-auth" onclick="showAuthView('email')"><i class="fa-solid fa-arrow-left"></i></button>
+            <div class="auth-brand">
+                <div class="brand-logo">
+                    <i class="fa-solid fa-envelope-open-text"></i>
+                </div>
+                <h2>Check your Email</h2>
+                <p>We sent a 6-digit verification code to <b id="otp-target-email"></b></p>
+            </div>
+            <form id="form-otp" onsubmit="handleVerifyOtp(event)">
+                <div class="otp-inputs-wrapper">
+                    <input type="text" class="otp-digit" maxlength="1" pattern="\d*" autofocus>
+                    <input type="text" class="otp-digit" maxlength="1" pattern="\d*">
+                    <input type="text" class="otp-digit" maxlength="1" pattern="\d*">
+                    <input type="text" class="otp-digit" maxlength="1" pattern="\d*">
+                    <input type="text" class="otp-digit" maxlength="1" pattern="\d*">
+                    <input type="text" class="otp-digit" maxlength="1" pattern="\d*">
+                </div>
+                <button type="submit" id="btn-verify-otp" class="btn btn-primary btn-block">
+                    <span>Verify & Log In</span>
+                </button>
+            </form>
+            <div class="auth-resend">
+                <span>Didn't receive the email? </span>
+                <button type="button" id="btn-resend-otp" class="btn-link" onclick="handleResendOtp()">Resend Code</button>
+            </div>
+        </div>
+
+        <!-- View 3: Profile Setup (For New Users) -->
+        <div id="view-setup" class="auth-card hidden">
+            <div class="auth-brand">
+                <h2>Set Up Your Profile</h2>
+                <p>Choose an avatar or upload your photo from gallery</p>
+            </div>
+            <form id="form-setup" onsubmit="handleCompleteSetup(event)">
+                <!-- Avatar Upload / Selection -->
+                <div class="avatar-upload-center">
+                    <div class="avatar-custom-wrapper" onclick="triggerSetupAvatarUpload()">
+                        <div id="setup-avatar-display" class="avatar-circle avatar-large avatar-preset-1">🦊</div>
+                        <span class="avatar-badge-upload"><i class="fa-solid fa-camera"></i></span>
+                    </div>
+                    <input type="file" id="setup-avatar-file" accept="image/*" style="display:none;" onchange="handleSetupAvatarFile(event)">
+                    <button type="button" class="btn-link-sm" onclick="triggerSetupAvatarUpload()">
+                        <i class="fa-solid fa-image"></i> Upload Photo from Gallery
+                    </button>
+                </div>
+
+                <div class="avatar-picker-title">Or Choose an Avatar Preset:</div>
+                <div class="avatar-presets-grid" id="setup-avatar-presets"></div>
+
+                <div class="form-group" style="margin-top: 18px;">
+                    <label for="setup-username"><i class="fa-solid fa-at"></i> Username (Instagram-style handle)</label>
+                    <input type="text" id="setup-username" placeholder="e.g. alex_runner" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="setup-name"><i class="fa-regular fa-user"></i> Full Display Name</label>
+                    <input type="text" id="setup-name" placeholder="e.g. Alex Johnson" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="setup-about"><i class="fa-regular fa-comment-dots"></i> Bio / Status</label>
+                    <input type="text" id="setup-about" value="Hey there! I am using ChatPulse">
+                </div>
+
+                <div class="form-group switch-group-row">
+                    <div>
+                        <div style="font-weight: 600; font-size: 14px;">Private Account</div>
+                        <div class="text-muted" style="font-size: 12px;">Only accepted connections can message you</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="setup-is-private">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block">
+                    <span>Enter ChatPulse</span>
+                    <i class="fa-solid fa-check"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MAIN APP SHELL -->
+    <!-- ========================================== -->
+    <div id="app-shell" class="app-layout hidden">
+        <!-- Left Navigation Bar -->
+        <aside class="sidebar-nav">
+            <div class="sidebar-top">
+                <div class="app-icon" title="ChatPulse">
+                    <i class="fa-solid fa-bolt-lightning"></i>
+                </div>
+                <nav class="nav-tabs">
+                    <button class="nav-tab-btn active" data-tab="chats" title="Chats" onclick="switchNavTab('chats')">
+                        <i class="fa-solid fa-message"></i>
+                        <span class="tab-label">Chats</span>
+                        <span id="unread-chats-badge" class="badge-dot hidden"></span>
+                    </button>
+                    <button class="nav-tab-btn" data-tab="calls" title="Calls" onclick="switchNavTab('calls')">
+                        <i class="fa-solid fa-phone"></i>
+                        <span class="tab-label">Calls</span>
+                    </button>
+                    <button class="nav-tab-btn" data-tab="requests" title="Requests" onclick="switchNavTab('requests')">
+                        <i class="fa-solid fa-user-plus"></i>
+                        <span class="tab-label">Requests</span>
+                        <span id="requests-badge" class="badge-dot hidden"></span>
+                    </button>
+                    <button class="nav-tab-btn" data-tab="profile" title="Profile" onclick="switchNavTab('profile')">
+                        <i class="fa-solid fa-user"></i>
+                        <span class="tab-label">Profile</span>
+                    </button>
+                </nav>
+            </div>
+            <div class="sidebar-bottom">
+                <button class="nav-tab-btn" id="theme-toggle-btn" title="Toggle Theme" onclick="toggleTheme()">
+                    <i class="fa-solid fa-moon" id="theme-icon"></i>
+                </button>
+                <div class="my-avatar-btn" onclick="switchNavTab('profile')" title="My Profile">
+                    <div id="my-avatar-nav" class="avatar-circle avatar-small avatar-preset-1">🦊</div>
+                    <span class="status-indicator online"></span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Middle Column: Tab Contents -->
+        <section class="sidebar-panel">
+            <!-- TAB 1: CHATS -->
+            <div id="tab-chats" class="tab-content active">
+                <div class="panel-header">
+                    <h2>Chats</h2>
+                    <button class="btn-icon" title="New Chat" onclick="openNewChatModal()">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                    </button>
+                </div>
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="chat-search" placeholder="Search chats by name or username..." oninput="filterChats(this.value)">
+                </div>
+                <div class="chats-list" id="chats-list-container">
+                    <div class="empty-state">
+                        <i class="fa-regular fa-comments"></i>
+                        <p>No conversations yet.<br>Click the pencil button to start one!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: CALLS -->
+            <div id="tab-calls" class="tab-content">
+                <div class="panel-header">
+                    <h2>Calls</h2>
+                    <button class="btn-icon" title="Clear Call History" onclick="clearCallLogs()">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </div>
+                <div class="calls-filter-bar">
+                    <button class="filter-pill active" onclick="filterCalls('all', this)">All</button>
+                    <button class="filter-pill" onclick="filterCalls('missed', this)">Missed</button>
+                </div>
+                <div class="calls-list" id="calls-list-container">
+                    <div class="empty-state">
+                        <i class="fa-solid fa-phone-slash"></i>
+                        <p>No call logs yet.<br>Audio & video calls will appear here.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: MESSAGE REQUESTS (For Instagram-Style Private Accounts) -->
+            <div id="tab-requests" class="tab-content">
+                <div class="panel-header">
+                    <h2>Message Requests</h2>
+                </div>
+                <div class="requests-list" id="requests-list-container">
+                    <div class="empty-state">
+                        <i class="fa-solid fa-user-check"></i>
+                        <p>No pending message requests.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: PROFILE -->
+            <div id="tab-profile" class="tab-content">
+                <div class="panel-header">
+                    <h2>My Profile</h2>
+                    <button class="btn-icon" title="Edit Profile" onclick="openEditProfileModal()">
+                        <i class="fa-solid fa-user-pen"></i>
+                    </button>
+                </div>
+                <div class="profile-scroll-view">
+                    <!-- Profile Hero Card -->
+                    <div class="profile-hero-card">
+                        <div class="profile-hero-avatar-box" onclick="triggerProfileHeroAvatarUpload()">
+                            <div id="profile-hero-avatar" class="avatar-circle avatar-large avatar-preset-1">🦊</div>
+                            <span class="hero-avatar-badge" title="Change profile photo from gallery"><i class="fa-solid fa-camera"></i></span>
+                        </div>
+                        <input type="file" id="hero-avatar-file-input" accept="image/*" style="display:none;" onchange="handleHeroAvatarUpload(event)">
+                        <h3 id="profile-hero-name">User Name</h3>
+                        <p id="profile-hero-handle" class="profile-username-tag">@username</p>
+                        <p id="profile-hero-email" class="text-muted"><i class="fa-regular fa-envelope"></i> user@example.com</p>
+                        <p id="profile-hero-about" class="profile-about-quote">"Hey there! I am using ChatPulse"</p>
+
+                        <!-- Presence Selector -->
+                        <div class="presence-selector-pills">
+                            <button class="presence-btn active" data-status="online" onclick="setPresenceStatus('online', this)">
+                                <span class="dot online"></span> Online
+                            </button>
+                            <button class="presence-btn" data-status="busy" onclick="setPresenceStatus('busy', this)">
+                                <span class="dot busy"></span> Busy
+                            </button>
+                            <button class="presence-btn" data-status="away" onclick="setPresenceStatus('away', this)">
+                                <span class="dot away"></span> Away
+                            </button>
+                            <button class="presence-btn" data-status="offline" onclick="setPresenceStatus('offline', this)">
+                                <span class="dot offline"></span> Invisible
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Profile QR Code Card Action -->
+                    <div class="profile-quick-actions">
+                        <button class="btn btn-secondary btn-block" onclick="openQrModal()">
+                            <i class="fa-solid fa-qrcode"></i> My Profile QR Code
+                        </button>
+                    </div>
+
+                    <!-- Instagram-Style Privacy Section -->
+                    <div class="settings-group">
+                        <div class="settings-group-title">Account Privacy</div>
+                        <div class="settings-item">
+                            <div class="settings-item-label">
+                                <i class="fa-solid fa-lock"></i>
+                                <div>
+                                    <div>Private Account</div>
+                                    <small class="text-muted" style="font-size: 11px;">Only approved users can message or call you</small>
+                                </div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="profile-private-toggle" onchange="toggleAccountPrivacy(this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Appearance & Theme Settings -->
+                    <div class="settings-group">
+                        <div class="settings-group-title">Appearance & Color</div>
+                        <div class="settings-item">
+                            <div class="settings-item-label">
+                                <i class="fa-solid fa-palette"></i>
+                                <span>Accent Color</span>
+                            </div>
+                            <div class="color-picker-row">
+                                <span class="color-dot color-teal active" onclick="setThemeAccent('teal', this)"></span>
+                                <span class="color-dot color-emerald" onclick="setThemeAccent('emerald', this)"></span>
+                                <span class="color-dot color-indigo" onclick="setThemeAccent('indigo', this)"></span>
+                                <span class="color-dot color-purple" onclick="setThemeAccent('purple', this)"></span>
+                                <span class="color-dot color-orange" onclick="setThemeAccent('orange', this)"></span>
+                                <span class="color-dot color-crimson" onclick="setThemeAccent('crimson', this)"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notifications & Sounds -->
+                    <div class="settings-group">
+                        <div class="settings-group-title">Preferences</div>
+                        <div class="settings-item">
+                            <div class="settings-item-label">
+                                <i class="fa-solid fa-bell"></i>
+                                <span>Sound Alerts</span>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="setting-sound" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="settings-item">
+                            <div class="settings-item-label">
+                                <i class="fa-solid fa-check-double"></i>
+                                <span>Read Receipts (Blue Ticks)</span>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="setting-read-receipts" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="settings-item clickable" onclick="openSmtpConfigModal()">
+                            <div class="settings-item-label">
+                                <i class="fa-solid fa-envelope-circle-check"></i>
+                                <span>Email Delivery Settings (SMTP)</span>
+                            </div>
+                            <i class="fa-solid fa-chevron-right text-muted"></i>
+                        </div>
+                    </div>
+
+                    <!-- Account & Storage -->
+                    <div class="settings-group">
+                        <div class="settings-group-title">Account & Storage</div>
+                        <div class="settings-item clickable" onclick="clearAppCache()">
+                            <div class="settings-item-label">
+                                <i class="fa-solid fa-broom"></i>
+                                <span>Clear App Cache</span>
+                            </div>
+                            <span class="text-muted">14 MB</span>
+                        </div>
+                        <div class="settings-item clickable" onclick="copyUserId()">
+                            <div class="settings-item-label">
+                                <i class="fa-solid fa-id-card"></i>
+                                <span>Copy User ID</span>
+                            </div>
+                            <i class="fa-regular fa-copy"></i>
+                        </div>
+                    </div>
+
+                    <div class="profile-danger-actions">
+                        <button class="btn btn-outline-danger btn-block" onclick="handleLogout()">
+                            <i class="fa-solid fa-right-from-bracket"></i> Log Out
+                        </button>
+                        <button class="btn btn-danger-text btn-block" onclick="handleDeleteAccount()">
+                            <i class="fa-solid fa-trash"></i> Delete Account Permanently
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Right Column: Active Chat Area -->
+        <main class="chat-viewport">
+            <div id="no-chat-selected" class="no-chat-screen">
+                <div class="welcome-box">
+                    <div class="welcome-icon"><i class="fa-solid fa-shield-cat"></i></div>
+                    <h2>Welcome to ChatPulse</h2>
+                    <p>Search any user by name or username to start chatting, voice calling, or video calling.</p>
+                    <button class="btn btn-primary" onclick="openNewChatModal()">
+                        <i class="fa-solid fa-plus"></i> Search Users & Start Chat
+                    </button>
+                </div>
+            </div>
+
+            <div id="active-chat-container" class="active-chat-wrapper hidden">
+                <!-- Chat Top Bar -->
+                <header class="chat-header">
+                    <button class="btn-icon mobile-back-btn" onclick="closeChatMobile()"><i class="fa-solid fa-arrow-left"></i></button>
+                    <div class="chat-header-user" onclick="viewContactInfo()">
+                        <div id="active-chat-avatar" class="avatar-circle avatar-medium avatar-preset-2">🦁</div>
+                        <div class="chat-header-meta">
+                            <div class="chat-header-title-row">
+                                <h3 id="active-chat-name">Contact Name</h3>
+                                <span id="active-chat-privacy-badge" class="privacy-badge hidden"><i class="fa-solid fa-lock"></i></span>
+                            </div>
+                            <span id="active-chat-status" class="online-status-text">Online</span>
+                        </div>
+                    </div>
+                    <div class="chat-header-actions">
+                        <button class="btn-icon" title="Audio Call" onclick="startCall('audio')">
+                            <i class="fa-solid fa-phone"></i>
+                        </button>
+                        <button class="btn-icon" title="Video Call" onclick="startCall('video')">
+                            <i class="fa-solid fa-video"></i>
+                        </button>
+                        <button class="btn-icon" title="Clear Chat" onclick="handleClearCurrentChat()">
+                            <i class="fa-solid fa-ellipsis-vertical"></i>
+                        </button>
+                    </div>
+                </header>
+
+                <!-- Private Account Notice (if pending request) -->
+                <div id="private-account-banner" class="private-banner hidden">
+                    <i class="fa-solid fa-lock"></i>
+                    <span>This account is private. Send a request to chat and call with them.</span>
+                    <button class="btn btn-primary btn-sm" id="btn-request-connect" onclick="sendConnectRequest()">
+                        <i class="fa-solid fa-user-plus"></i> Request to Chat
+                    </button>
+                </div>
+
+                <!-- Messages Stream View -->
+                <div class="messages-container" id="messages-stream"></div>
+
+                <!-- Typing indicator -->
+                <div id="typing-indicator" class="typing-banner hidden">
+                    <span id="typing-text">typing...</span>
+                    <span class="typing-dots"><span>.</span><span>.</span><span>.</span></span>
+                </div>
+
+                <!-- Inline Message Edit Bar (When editing a message) -->
+                <div id="inline-edit-bar" class="inline-edit-bar hidden">
+                    <div class="edit-info">
+                        <i class="fa-solid fa-pen"></i>
+                        <span>Editing message</span>
+                    </div>
+                    <button class="btn-icon btn-sm" onclick="cancelEditingMessage()"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+
+                <!-- Chat Input Bottom Bar -->
+                <footer class="chat-input-bar">
+                    <!-- Quick Emoji Bar -->
+                    <div id="quick-emoji-bar" class="quick-emoji-drawer hidden">
+                        <span class="emoji-chip" onclick="insertEmoji('😀')">😀</span>
+                        <span class="emoji-chip" onclick="insertEmoji('😂')">😂</span>
+                        <span class="emoji-chip" onclick="insertEmoji('😍')">😍</span>
+                        <span class="emoji-chip" onclick="insertEmoji('🔥')">🔥</span>
+                        <span class="emoji-chip" onclick="insertEmoji('👍')">👍</span>
+                        <span class="emoji-chip" onclick="insertEmoji('❤️')">❤️</span>
+                        <span class="emoji-chip" onclick="insertEmoji('🎉')">🎉</span>
+                        <span class="emoji-chip" onclick="insertEmoji('👏')">👏</span>
+                        <span class="emoji-chip" onclick="insertEmoji('🙏')">🙏</span>
+                    </div>
+
+                    <div class="input-controls-row">
+                        <button type="button" class="btn-icon" id="btn-toggle-emojis" onclick="toggleQuickEmojis()" title="Insert Emoji">
+                            <i class="fa-regular fa-face-smile"></i>
+                        </button>
+                        <label class="btn-icon" title="Attach Photo from Gallery" for="file-upload-input">
+                            <i class="fa-solid fa-paperclip"></i>
+                            <input type="file" id="file-upload-input" accept="image/*" style="display:none;" onchange="handleFileUpload(event)">
+                        </label>
+                        <button type="button" class="btn-icon" id="btn-record-audio" title="Record Voice Note" onclick="toggleAudioRecording()">
+                            <i class="fa-solid fa-microphone" id="mic-icon"></i>
+                        </button>
+                        <div class="text-input-field">
+                            <textarea id="message-input" placeholder="Type a message..." rows="1" onkeydown="handleInputKey(event)" oninput="handleTypingEvent()"></textarea>
+                        </div>
+                        <button type="button" class="btn-send" id="btn-send-message" onclick="sendTextMessage()" title="Send">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </footer>
+            </div>
+        </main>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODALS: CALLS, NEW CHAT, EDIT PROFILE, QR, FORWARD, SMTP -->
+    <!-- ========================================== -->
+
+    <!-- Incoming Call Modal -->
+    <div id="modal-incoming-call" class="call-overlay hidden">
+        <div class="incoming-call-box">
+            <div class="call-type-badge" id="incoming-call-type-badge">
+                <i class="fa-solid fa-phone"></i> Incoming Voice Call
+            </div>
+            <div class="incoming-avatar-pulsing">
+                <div id="incoming-avatar" class="avatar-circle avatar-xlarge avatar-preset-1">🦁</div>
+            </div>
+            <h2 id="incoming-caller-name">Caller Name</h2>
+            <p id="incoming-caller-handle" class="profile-username-tag" style="color: rgba(255,255,255,0.7);">@username</p>
+            <p class="ringing-text">Ringing...</p>
+            <div class="call-actions-row">
+                <button class="call-btn btn-decline" onclick="rejectIncomingCall()">
+                    <i class="fa-solid fa-phone-slash"></i>
+                </button>
+                <button class="call-btn btn-accept" onclick="acceptIncomingCall()">
+                    <i class="fa-solid fa-phone"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Audio Call Modal -->
+    <div id="modal-audio-call" class="call-overlay hidden">
+        <div class="active-audio-box">
+            <div class="active-call-header">
+                <span class="badge-pill"><i class="fa-solid fa-lock"></i> Encrypted Voice Call</span>
+            </div>
+            <div class="audio-call-avatar-wrap">
+                <div id="audio-call-avatar" class="avatar-circle avatar-xlarge avatar-preset-1">🦊</div>
+            </div>
+            <h2 id="audio-call-name">Contact Name</h2>
+            <div id="audio-call-status" class="call-timer-text">Calling...</div>
+            <div class="audio-waves" id="audio-call-waves">
+                <span></span><span></span><span></span><span></span><span></span>
+            </div>
+            <div class="call-controls-bar">
+                <button class="ctrl-btn" id="btn-audio-mute" onclick="toggleMute()" title="Mute Mic">
+                    <i class="fa-solid fa-microphone"></i>
+                </button>
+                <button class="ctrl-btn" id="btn-audio-speaker" onclick="toggleSpeaker()" title="Speaker">
+                    <i class="fa-solid fa-volume-high"></i>
+                </button>
+                <button class="ctrl-btn btn-hangup" onclick="endCall()" title="End Call">
+                    <i class="fa-solid fa-phone-slash"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Video Call Modal -->
+    <div id="modal-video-call" class="call-overlay hidden">
+        <div class="video-call-screen">
+            <video id="remote-video" autoplay playsinline></video>
+            <div id="remote-video-fallback" class="remote-fallback hidden">
+                <div id="video-fallback-avatar" class="avatar-circle avatar-large avatar-preset-2">🦁</div>
+                <h3 id="video-fallback-name">Remote User</h3>
+                <span class="text-muted">Camera is paused</span>
+            </div>
+
+            <div class="video-overlay-top">
+                <div class="video-contact-info">
+                    <h3 id="video-call-name">Contact Name</h3>
+                    <span id="video-call-timer" class="badge-pill">00:00</span>
+                </div>
+            </div>
+
+            <div class="local-pip-box" id="local-pip-container">
+                <video id="local-video" autoplay playsinline muted></video>
+                <span class="pip-label">You</span>
+            </div>
+
+            <div class="video-controls-bar">
+                <button class="ctrl-btn" id="btn-video-cam" onclick="toggleCamera()" title="Toggle Camera">
+                    <i class="fa-solid fa-video"></i>
+                </button>
+                <button class="ctrl-btn" id="btn-video-mute" onclick="toggleMute()" title="Mute Microphone">
+                    <i class="fa-solid fa-microphone"></i>
+                </button>
+                <button class="ctrl-btn btn-hangup" onclick="endCall()" title="End Call">
+                    <i class="fa-solid fa-phone-slash"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Chat / Search Users Modal -->
+    <div id="modal-new-chat" class="modal-backdrop hidden" onclick="closeModalOnBackdrop(event, 'modal-new-chat')">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Find Friends & Start Chat</h3>
+                <button class="btn-icon" onclick="closeNewChatModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="new-chat-search" placeholder="Search by username (@user), name or email..." oninput="searchUsersForChat(this.value)">
+                </div>
+                <div class="users-lookup-list" id="users-lookup-container">
+                    <p class="text-muted text-center" style="padding: 20px;">Loading users...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Profile Modal -->
+    <div id="modal-edit-profile" class="modal-backdrop hidden" onclick="closeModalOnBackdrop(event, 'modal-edit-profile')">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Edit Profile</h3>
+                <button class="btn-icon" onclick="closeEditProfileModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="form-edit-profile" onsubmit="handleSaveProfile(event)">
+                    <!-- Custom Gallery Avatar Upload -->
+                    <div class="avatar-upload-center">
+                        <div class="avatar-custom-wrapper" onclick="triggerEditAvatarUpload()">
+                            <div id="edit-avatar-display" class="avatar-circle avatar-large avatar-preset-1">🦊</div>
+                            <span class="avatar-badge-upload"><i class="fa-solid fa-camera"></i></span>
+                        </div>
+                        <input type="file" id="edit-avatar-file-input" accept="image/*" style="display:none;" onchange="handleEditAvatarUpload(event)">
+                        <button type="button" class="btn-link-sm" onclick="triggerEditAvatarUpload()">
+                            <i class="fa-solid fa-image"></i> Change Photo from Gallery
+                        </button>
+                    </div>
+
+                    <div class="avatar-picker-title">Or Choose an Avatar Preset:</div>
+                    <div class="avatar-presets-grid" id="edit-avatar-presets"></div>
+
+                    <div class="form-group" style="margin-top: 18px;">
+                        <label for="edit-username"><i class="fa-solid fa-at"></i> Username (Instagram handle)</label>
+                        <input type="text" id="edit-username" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit-name">Display Name</label>
+                        <input type="text" id="edit-name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit-about">About / Bio</label>
+                        <input type="text" id="edit-about">
+                    </div>
+
+                    <div class="quick-status-chips">
+                        <span class="chip" onclick="setEditAbout('Available')">💬 Available</span>
+                        <span class="chip" onclick="setEditAbout('At work')">💼 At work</span>
+                        <span class="chip" onclick="setEditAbout('Busy')">🚀 Busy</span>
+                        <span class="chip" onclick="setEditAbout('In a meeting')">🎧 In a meeting</span>
+                        <span class="chip" onclick="setEditAbout('Sleeping')">😴 Sleeping</span>
+                    </div>
+
+                    <div class="form-group switch-group-row" style="margin-top: 16px;">
+                        <div>
+                            <div style="font-weight: 600; font-size: 14px;">Private Account</div>
+                            <div class="text-muted" style="font-size: 12px;">Require approval before someone can chat</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="edit-is-private">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="modal-footer" style="margin-top: 24px;">
+                        <button type="button" class="btn btn-secondary" onclick="closeEditProfileModal()">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Real Profile QR Code Modal -->
+    <div id="modal-qr" class="modal-backdrop hidden" onclick="closeModalOnBackdrop(event, 'modal-qr')">
+        <div class="modal-box text-center">
+            <div class="modal-header">
+                <h3>My Profile QR Code</h3>
+                <button class="btn-icon" onclick="closeQrModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="qr-card">
+                    <div id="qr-avatar-display" class="avatar-circle avatar-medium avatar-preset-1">🦊</div>
+                    <h3 id="qr-user-name" style="margin-top: 8px;">User Name</h3>
+                    <p id="qr-user-handle" class="profile-username-tag">@username</p>
+                    
+                    <!-- Real Scannable QR Code Image -->
+                    <div class="qr-real-wrapper">
+                        <img id="qr-real-image" src="" alt="Profile QR Code" class="qr-image-element">
+                    </div>
+                </div>
+                <p class="text-muted" style="font-size: 12px; margin-top: 14px;">
+                    Scan with any smartphone camera or Google Lens to connect on ChatPulse!
+                </p>
+                <div class="qr-modal-buttons">
+                    <button class="btn btn-secondary" onclick="downloadQrCode()">
+                        <i class="fa-solid fa-download"></i> Save Image
+                    </button>
+                    <button class="btn btn-primary" onclick="copyMyProfileLink()">
+                        <i class="fa-solid fa-share-nodes"></i> Copy Profile Link
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Forward Message Modal -->
+    <div id="modal-forward" class="modal-backdrop hidden" onclick="closeModalOnBackdrop(event, 'modal-forward')">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Forward Message to...</h3>
+                <button class="btn-icon" onclick="closeForwardModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="forward-preview-box">
+                    <span id="forward-preview-text">Message preview...</span>
+                </div>
+                <div class="users-lookup-list" id="forward-users-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SMTP Real Email Configuration Modal -->
+    <div id="modal-smtp" class="modal-backdrop hidden" onclick="closeModalOnBackdrop(event, 'modal-smtp')">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-envelope"></i> Email Delivery Setup</h3>
+                <button class="btn-icon" onclick="closeSmtpModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted" style="font-size: 13px; line-height: 1.5; margin-bottom: 16px;">
+                    Configure your SMTP credentials below to send genuine 6-digit OTP codes straight to users' real email inboxes.
+                </p>
+
+                <!-- Quick Provider Presets -->
+                <div class="smtp-presets-row">
+                    <button type="button" class="chip" onclick="applySmtpPreset('gmail')">Gmail</button>
+                    <button type="button" class="chip" onclick="applySmtpPreset('outlook')">Outlook</button>
+                    <button type="button" class="chip" onclick="applySmtpPreset('yahoo')">Yahoo</button>
+                </div>
+
+                <form id="form-smtp" onsubmit="handleSaveSmtp(event)">
+                    <div class="form-group">
+                        <label for="smtp-server">SMTP Server Host</label>
+                        <input type="text" id="smtp-server" placeholder="smtp.gmail.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="smtp-port">SMTP Port</label>
+                        <input type="number" id="smtp-port" placeholder="587" value="587" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="smtp-email">Sender Email Address</label>
+                        <input type="email" id="smtp-email" placeholder="youremail@gmail.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="smtp-password">App Password</label>
+                        <input type="password" id="smtp-password" placeholder="16-character App Password" required>
+                        <small class="text-muted" style="display:block; margin-top:4px; font-size: 11px;">
+                            For Gmail: Generate a 16-character <b>App Password</b> in your Google Account Security settings.
+                        </small>
+                    </div>
+                    <div class="modal-footer" style="margin-top: 20px;">
+                        <button type="button" class="btn btn-secondary" onclick="testSmtpConnection()">Test Connection</button>
+                        <button type="submit" class="btn btn-primary">Save Settings</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="/static/js/webrtc.js"></script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
